@@ -28,7 +28,6 @@ class Request
         if (!is_array($data)) {
             throw new HttpException("Not an array/object in json body");
         }
-
         return $data;
     }
 

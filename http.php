@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Actions\CreateArticleDislike;
+use App\Http\Actions\CreateArticleLike;
+use App\Http\Actions\CreateCommentDislike;
+use App\Http\Actions\CreateCommentLike;
 use App\Http\Actions\CreateUser;
 use App\Http\Actions\CreateArticle;
 use App\Http\Actions\CreateComment;
@@ -15,7 +19,7 @@ use App\Http\Actions\UpdateUser;
 use App\Http\ErrorResponse;
 use App\Http\Request;
 
-require_once __DIR__ . '/vendor/autoload.php';
+$container = require __DIR__ . '/bootstrap.php';
 
 $request = new Request(
     $_GET,
@@ -25,6 +29,7 @@ $request = new Request(
 
 try {
     $path = $request->path();
+
 } catch (HttpException) {
     (new ErrorResponse)->send();
     return;
@@ -39,20 +44,25 @@ try {
 
 $routes = [
     'GET' => [
-        '/user/show' => new FindUserByEmail(),
-        '/article/show' => new FindArticleByTitle(),
-        '/comment/show' => new FindCommentById(),
+        '/user/show' => FindUserByEmail::class,
+        '/article/show' => FindArticleByTitle::class,
+        '/comment/show' => FindCommentById::class,
     ],
     'POST' => [
-        '/user/create' => new CreateUser(),
-        '/user/update' => new UpdateUser(),
-        '/user/delete' => new DeleteUser(),
-        '/article/create' => new CreateArticle(),
-        '/article/update' => new UpdateArticle(),
-        '/article/delete' => new DeleteArticle(),
-        '/comment/create' => new CreateComment(),
-        '/comment/update' => new UpdateComment(),
-        '/comment/delete' => new DeleteComment(),
+        '/user/create' => CreateUser::class,
+        '/user/update' => UpdateUser::class,
+        '/user/delete' => DeleteUser::class,
+        '/article/create' => CreateArticle::class,
+        '/article/update' => UpdateArticle::class,
+        '/article/delete' => DeleteArticle::class,
+        '/comment/create' => CreateComment::class,
+        '/comment/update' => UpdateComment::class,
+        '/comment/delete' => DeleteComment::class,
+        '/article/like/create' => CreateArticleLike::class,
+        '/article/dislike/create' => CreateArticleDislike::class,
+        '/comment/like/create' => CreateCommentLike::class,
+        '/comment/dislike/create' => CreateCommentDislike::class,
+
     ],
 ];
 
@@ -66,7 +76,9 @@ if (!array_key_exists($path, $routes[$method])) {
     return;
 }
 
-$action = $routes[$method][$path];
+$actionClassName = $routes[$method][$path];
+
+$action = $container->get($actionClassName);
 
 try {
     $response = $action->handle($request);

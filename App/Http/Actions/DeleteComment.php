@@ -29,7 +29,7 @@ class DeleteComment implements ActionInterface
         }
 
         return new SuccessfulResponse([
-            'Удален комментарий с id' => $id,
+            'Removed comment with id ' => $id,
         ]);
     }
 }

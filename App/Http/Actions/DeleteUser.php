@@ -30,7 +30,7 @@ class DeleteUser implements ActionInterface
         }
 
         return new SuccessfulResponse([
-            'Удален пользователь с id' => $id,
+            'Deleted user with id ' => $id,
         ]);
     }
 }
