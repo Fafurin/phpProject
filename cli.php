@@ -1,11 +1,18 @@
 <?php
 
+use App\Commands\CommandHandlerInterface;
+use App\Commands\CreateArticleCommandHandler;
+use App\Commands\CreateCommentCommandHandler;
+use App\Commands\CreateEntityCommand;
+use App\Commands\CreateUserCommandHandler;
+use App\Container\DIContainer;
+use App\Entities\Article\Article;
+use App\Entities\Comment\Comment;
 use App\Entities\User\User;
 use App\Enums\Argument;
 use App\Exceptions\NotFoundException;
 use App\Factories\EntityManagerFactory;
 use App\Factories\EntityManagerFactoryInterface;
-use App\Repositories\UserRepositoryInterface;
 
 try {
     if(count($argv) < 2)
@@ -21,29 +28,28 @@ try {
      * @var EntityManagerFactoryInterface $entityMangerFactory
      */
     $entityMangerFactory = new EntityManagerFactory();
-    $entity = $entityMangerFactory->createEntityByInputArgs($argv);
-    if($entity instanceof User)
+    $entity =  $entityMangerFactory->createEntityByInputArgs($argv);
+
+    /**
+     * @var DIContainer $container
+     */
+    if(isset($container))
     {
         /**
-         * @var UserRepositoryInterface $repository
+         * @var CommandHandlerInterface $commandHandler
          */
-        $repository = $entityMangerFactory->getRepository($entity::class);
-
-        if(!$repository->getUserByEmail($entity->getEmail()))
+        $commandHandler =  match ($entity::class)
         {
-            $entityMangerFactory->getEntityManager()->create($entity);
-        }
+            User::class => $container->get(CreateUserCommandHandler::class),
+            Article::class => $container->get(CreateArticleCommandHandler::class),
+            Comment::class => $container->get(CreateCommentCommandHandler::class),
+        };
+
+        $commandHandler->handle(new CreateEntityCommand($entity));
     }
+
 }catch (Exception $exception)
 {
     echo $exception->getMessage().PHP_EOL;
     http_response_code(404);
 }
-
-$object = new class
-{
-    public function sayHello(string $name)
-    {
-        echo "Hello, $name";
-    }
-};

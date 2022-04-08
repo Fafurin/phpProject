@@ -2,8 +2,7 @@
 
 namespace App\Commands;
 
-use App\Connections\ConnectorInterface;
-use App\Connections\SqLiteConnector;
+use App\Drivers\ConnectionInterface;
 use App\Entities\User\User;
 use App\Exceptions\UserEmailExistException;
 use App\Exceptions\UserNotFoundException;
@@ -16,11 +15,10 @@ class CreateUserCommandHandler implements CommandHandlerInterface
 
     public function __construct(
         private ?UserRepositoryInterface $userRepository = null,
-        private ?ConnectorInterface $connector = null)
+        private ConnectionInterface $connection)
     {
         $this->userRepository = $this->userRepository ?? new UserRepository();
-        $this->connector = $connector ?? new SqLiteConnector();
-        $this->statement =$this->connector->getConnection()->prepare($this->getSql());
+        $this->statement = $connection->prepare($this->getSql());
     }
 
     public function handle(CommandInterface $command): void

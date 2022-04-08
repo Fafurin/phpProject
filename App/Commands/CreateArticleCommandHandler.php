@@ -2,8 +2,7 @@
 
 namespace App\Commands;
 
-use App\Connections\ConnectorInterface;
-use App\Connections\SqLiteConnector;
+use App\Drivers\ConnectionInterface;
 use App\Entities\Article\Article;
 use App\Exceptions\ArticleNotFoundException;
 use App\Exceptions\ArticleTitleExistException;
@@ -16,11 +15,10 @@ class CreateArticleCommandHandler implements CommandHandlerInterface
 
     public function __construct(
         private ?ArticleRepositoryInterface $articleRepository = null,
-        private ?ConnectorInterface $connector = null)
+        private ConnectionInterface $connection)
     {
         $this->articleRepository = $this->articleRepository ?? new ArticleRepository();
-        $this->connector = $connector ?? new SqLiteConnector();
-        $this->statement = $this->connector->getConnection()->prepare($this->getSql());
+        $this->statement = $connection->prepare($this->getSql());
     }
 
     /**

@@ -29,7 +29,7 @@ class DeleteArticle implements ActionInterface
         }
 
         return new SuccessfulResponse([
-            'Удалена статья с id' => $id,
+            'Deleted article with id ' => $id,
         ]);
     }
 }

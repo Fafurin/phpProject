@@ -29,7 +29,7 @@ class CommentRepository extends EntityRepository implements CommentRepositoryInt
 
 
         if(!$commentData){
-            throw new CommentNotFoundException("Cannot find comment");
+            throw new CommentNotFoundException("Comment not found");
         }
 
         return new Comment(

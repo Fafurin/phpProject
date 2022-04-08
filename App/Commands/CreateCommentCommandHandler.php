@@ -2,8 +2,6 @@
 
 namespace App\Commands;
 
-use App\Connections\ConnectorInterface;
-use App\Connections\SqLiteConnector;
 use App\Entities\Comment\Comment;
 
 class CreateCommentCommandHandler implements CommandHandlerInterface
@@ -11,10 +9,9 @@ class CreateCommentCommandHandler implements CommandHandlerInterface
     private \PDOStatement|false $statement;
 
     public function __construct(
-        private ?ConnectorInterface $connector = null)
+        private ConnectionInterface $connection)
     {
-        $this->connector = $connector ?? new SqLiteConnector();
-        $this->statement =$this->connector->getConnection()->prepare($this->getSql());
+        $this->statement = $connection->prepare($this->getSql());
     }
 
     public function handle(CommandInterface $command): void

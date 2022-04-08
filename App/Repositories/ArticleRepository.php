@@ -29,7 +29,7 @@ class ArticleRepository extends EntityRepository implements ArticleRepositoryInt
         $articleData = $statement->fetch(PDO::FETCH_OBJ);
 
         if(!$articleData){
-            throw new ArticleNotFoundException("Cannot find article");
+            throw new ArticleNotFoundException("Article not found");
         }
 
         return new Article(
