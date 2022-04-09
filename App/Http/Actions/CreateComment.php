@@ -10,15 +10,14 @@ use App\Http\ErrorResponse;
 use App\Http\Request;
 use App\Http\Response;
 use App\Http\SuccessfulResponse;
+use Psr\Log\LoggerInterface;
 
 class CreateComment implements ActionInterface
 {
     public function __construct(
-        private ?CreateCommentCommandHandler $createCommentCommandHandler = null
-    )
-    {
-        $this->createCommentCommandHandler = $this->createCommentCommandHandler ?? new CreateCommentCommandHandler();
-    }
+        private CreateCommentCommandHandler $createCommentCommandHandler,
+        private LoggerInterface $logger
+    ){}
 
     public function handle(Request $request): Response
     {
@@ -30,8 +29,9 @@ class CreateComment implements ActionInterface
                 $request->jsonBodyField('text'),
             );
             $this->createCommentCommandHandler->handle(new CreateEntityCommand($comment));
-        } catch (HttpException $exception) {
-            return new ErrorResponse($exception->getMessage());
+        } catch (HttpException $e) {
+            $this->logger->warning($e->getMessage());
+            return new ErrorResponse($e->getMessage());
         }
 
         return new SuccessfulResponse([

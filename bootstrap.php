@@ -12,14 +12,20 @@ use App\Repositories\EvaluationRepository;
 use App\Repositories\EvaluationRepositoryInterface;
 use App\Repositories\UserRepository;
 use App\Repositories\UserRepositoryInterface;
+use Dotenv\Dotenv;
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
+use Psr\Log\LoggerInterface;
 
 require_once __DIR__ . '/vendor/autoload.php';
+
+Dotenv::createImmutable(__DIR__)->safeLoad();
 
 $container = DIContainer::getInstance();
 
 $container->bind(
     ConnectionInterface::class,
-    PdoConnectionDriver::getInstance(SqLiteConfig::DSN)
+    PdoConnectionDriver::getInstance($_SERVER['DSN_DATABASE'])
 );
 
 $container->bind(
@@ -41,6 +47,35 @@ $container->bind(
     EvaluationRepositoryInterface::class,
     EvaluationRepository::class
 );
+
+$container->bind(
+    LoggerInterface::class,
+    new Logger('project')
+);
+
+$logger = new Logger('project');
+
+$isNeedLogToFiles = (bool)$_SERVER['LOG_TO_FILES'];
+$isNeedLogToConsole = (bool)$_SERVER['LOG_TO_CONSOLE'];
+
+if($isNeedLogToFiles){
+    $logger
+        ->pushHandler(new StreamHandler(
+        __DIR__ . '/.logs/project.log'
+    ))
+        ->pushHandler(new StreamHandler(
+            __DIR__ . '/.logs/project.error.log',
+            LOGGER::ERROR,
+            false
+        ));
+}
+
+if($isNeedLogToConsole){
+    $logger
+        ->pushHandler(new StreamHandler(
+        "php://stdout"
+    ));
+}
 
 return $container;
 

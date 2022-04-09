@@ -2,30 +2,28 @@
 
 namespace App\Commands;
 
-use App\Connections\ConnectorInterface;
-use App\Connections\SqLiteConnector;
+use App\Drivers\ConnectionInterface;
 use App\Entities\Article\Article;
 use App\Exceptions\ArticleNotFoundException;
-use App\Repositories\ArticleRepository;
 use App\Repositories\ArticleRepositoryInterface;
+use Psr\Log\LoggerInterface;
 
 class UpdateArticleCommandHandler implements CommandHandlerInterface
 {
-    private \PDOStatement|false $statement;
 
     public function __construct(
         private ?ArticleRepositoryInterface $articleRepository = null,
-        private ?ConnectorInterface $connector = null)
-    {
-        $this->articleRepository = $this->articleRepository ?? new ArticleRepository();
-        $this->connector = $connector ?? new SqLiteConnector();
-        $this->statement =$this->connector->getConnection()->prepare($this->getSql());
-    }
+        private ConnectionInterface $connection,
+        private LoggerInterface $logger)
+    {}
 
     /**
      * @throws ArticleNotFoundException
      */
     public function handle(CommandInterface $command): void{
+
+        $this->logger->info('Update article command started');
+
         /**
          * @var Article $article
          */
@@ -33,13 +31,14 @@ class UpdateArticleCommandHandler implements CommandHandlerInterface
         $id = $command->getId();
 
         if($this->isArticleExists($id)){
-            $this->statement->execute([
+            $this->connection->prepare($this->getSql())->execute([
                 ':id' => (string)$id,
                 ':authorId' => $article->getAuthorId(),
                 ':title' => $article->getTitle(),
                 ':text' => $article->getText()
             ]);
         }else{
+            $this->logger->warning("The article with this id: $id not found");
             throw new ArticleNotFoundException();
         }
     }

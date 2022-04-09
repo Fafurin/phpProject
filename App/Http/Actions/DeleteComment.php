@@ -10,22 +10,23 @@ use App\Http\ErrorResponse;
 use App\Http\Request;
 use App\Http\Response;
 use App\Http\SuccessfulResponse;
+use Psr\Log\LoggerInterface;
 
 class DeleteComment implements ActionInterface
 {
     public function __construct(
-        private ?DeleteCommentCommandHandler $deleteCommentCommandHandler = null)
-    {
-        $this->deleteCommentCommandHandler = $this->deleteCommentCommandHandler ?? new DeleteCommentCommandHandler();
-    }
+        private DeleteCommentCommandHandler $deleteCommentCommandHandler,
+        private LoggerInterface $logger
+    ){}
 
     public function handle(Request $request): Response
     {
         try {
             $id = $request->jsonBodyField('id');
             $this->deleteCommentCommandHandler->handle(new DeleteEntityCommand($id));
-        } catch (HttpException|CommentNotFoundException $exception) {
-            return new ErrorResponse($exception->getMessage());
+        } catch (HttpException|CommentNotFoundException $e) {
+            $this->logger->warning($e->getMessage());
+            return new ErrorResponse($e->getMessage());
         }
 
         return new SuccessfulResponse([

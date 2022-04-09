@@ -13,6 +13,9 @@ class Request
         private string $body
     ){}
 
+    /**
+     * @throws HttpException
+     */
     public function jsonBody(): array
     {
         try {
@@ -22,6 +25,7 @@ class Request
                 flags: JSON_THROW_ON_ERROR
             );
         } catch (JsonException) {
+
             throw new HttpException("Cannot decode json body");
         }
 
@@ -31,6 +35,9 @@ class Request
         return $data;
     }
 
+    /**
+     * @throws HttpException
+     */
     public function jsonBodyField(string $field): mixed
     {
         $data = $this->jsonBody();
@@ -46,6 +53,9 @@ class Request
         return $data[$field];
     }
 
+    /**
+     * @throws HttpException
+     */
     public function method(): string
     {
         if (!array_key_exists('REQUEST_METHOD', $this->server)) {
@@ -55,6 +65,9 @@ class Request
         return $this->server['REQUEST_METHOD'];
     }
 
+    /**
+     * @throws HttpException
+     */
     public function path(): string
     {
         if (!array_key_exists('REQUEST_URI', $this->server)) {
@@ -70,17 +83,18 @@ class Request
         return $components['path'];
     }
 
+    /**
+     * @throws HttpException
+     */
     public function query(string $param): string
     {
         if (!array_key_exists($param, $this->get)) {
-
             throw new HttpException(
                 "No such query param in the request: $param"
             );
         }
 
         $value = trim($this->get[$param]);
-
         if (empty($value)) {
             throw new HttpException(
                 "Empty query param in the request: $param"
@@ -90,6 +104,9 @@ class Request
         return $value;
     }
 
+    /**
+     * @throws HttpException
+     */
     public function header(string $header): string
     {
         $headerName = mb_strtoupper("http_". str_replace('-', '_', $header));
@@ -103,7 +120,6 @@ class Request
         if (empty($value)) {
             throw new HttpException("Empty header in the request: $header");
         }
-
         return $value;
     }
 }

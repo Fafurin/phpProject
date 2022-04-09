@@ -17,8 +17,8 @@ abstract class Connector implements ConnectorInterface
                 $this->getPassword(),
                 $this->getOptions()
             );
-        } catch (PDOException $exception) {
-            print $exception->getMessage();
+        } catch (PDOException $e) {
+            print $e->getMessage();
             die();
         }
         return $dbh;

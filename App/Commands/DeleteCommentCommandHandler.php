@@ -2,30 +2,27 @@
 
 namespace App\Commands;
 
-use App\Connections\ConnectorInterface;
-use App\Connections\SqLiteConnector;
+use App\Drivers\ConnectionInterface;
 use App\Entities\Comment\Comment;
 use App\Exceptions\CommentNotFoundException;
-use App\Repositories\CommentRepository;
 use App\Repositories\CommentRepositoryInterface;
+use Psr\Log\LoggerInterface;
 
 class DeleteCommentCommandHandler implements CommandHandlerInterface
 {
-    private \PDOStatement|false $statement;
-
     public function __construct(
         private ?CommentRepositoryInterface $commentRepository = null,
-        private ?ConnectorInterface $connector = null)
-    {
-        $this->commentRepository = $this->commentRepository ?? new CommentRepository();
-        $this->connector = $connector ?? new SqLiteConnector();
-        $this->statement = $this->connector->getConnection()->prepare($this->getSql());
-    }
+        private ConnectionInterface $connection,
+        private LoggerInterface $logger)
+    {}
 
     /**
      * @throws CommentNotFoundException
      */
     public function handle(CommandInterface $command): void{
+
+        $this->logger->info('Delete comment command started');
+
         /**
          * @var Comment $comment
          */
@@ -33,8 +30,11 @@ class DeleteCommentCommandHandler implements CommandHandlerInterface
         $id = $command->getId();
 
         if($this->isCommentExists($id)){
-            $this->statement->execute([':id' => (string)$id]);
+            $this->connection->prepare($this->getSql())->execute([
+                ':id' => (string)$id
+            ]);
         } else {
+            $this->logger->warning("The comment with this id: $id not found");
             throw new CommentNotFoundException;
         }
     }

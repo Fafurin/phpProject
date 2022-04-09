@@ -6,23 +6,24 @@ use App\Drivers\ConnectionInterface;
 use App\Entities\User\User;
 use App\Exceptions\UserEmailExistException;
 use App\Exceptions\UserNotFoundException;
-use App\Repositories\UserRepository;
 use App\Repositories\UserRepositoryInterface;
+use Psr\Log\LoggerInterface;
 
 class CreateUserCommandHandler implements CommandHandlerInterface
 {
-    private \PDOStatement|false $statement;
-
     public function __construct(
         private ?UserRepositoryInterface $userRepository = null,
-        private ConnectionInterface $connection)
-    {
-        $this->userRepository = $this->userRepository ?? new UserRepository();
-        $this->statement = $connection->prepare($this->getSql());
-    }
+        private ConnectionInterface $connection,
+        private LoggerInterface $logger){}
 
+    /**
+     * @throws UserEmailExistException
+     */
     public function handle(CommandInterface $command): void
     {
+
+        $this->logger->info('Create user command started');
+
         /**
          * @var User $user
          */
@@ -30,12 +31,16 @@ class CreateUserCommandHandler implements CommandHandlerInterface
         $email = $user->getEmail();
 
         if(!$this->isUserExists($email)){
-            $this->statement->execute([
+            $this->connection->prepare($this->getSql())->execute([
                 ':firstName' => $user->getFirstName(),
                 ':lastName' => $user->getLastName(),
                 ':email' => $email
             ]);
+
+            $this->logger->info("User created with the email: $email");
+
         }else{
+            $this->logger->warning("The user with this email: $email already exists");
             throw new UserEmailExistException();
         }
     }

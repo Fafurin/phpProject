@@ -2,13 +2,23 @@
 
 namespace App\Repositories;
 
+use App\Drivers\ConnectionInterface;
 use App\Entities\User\User;
 use App\Exceptions\UserNotFoundException;
 use PDO;
 use PDOStatement;
+use Psr\Log\LoggerInterface;
+
 
 class UserRepository extends EntityRepository implements UserRepositoryInterface
 {
+    public function __construct(
+        ConnectionInterface $connection,
+        private LoggerInterface $logger)
+    {
+        parent::__construct($connection);
+    }
+
     /**
      * @throws UserNotFoundException
      */
@@ -29,6 +39,7 @@ class UserRepository extends EntityRepository implements UserRepositoryInterface
         $userData = $statement->fetch(PDO::FETCH_OBJ);
 
         if (!$userData) {
+            $this->logger->error("User not found");
             throw new UserNotFoundException("User not found");
         }
 

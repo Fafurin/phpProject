@@ -2,4 +2,4 @@
 
 $container = require __DIR__ . '/bootstrap.php';
 
-require __DIR__ . '/http.php';
+require __DIR__ . '/cli.php';

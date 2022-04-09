@@ -5,6 +5,7 @@ namespace App\Entities\Comment;
 class Comment implements CommentInterface
 {
     public const TABLE_NAME = 'comments';
+    public const ENTITY_TYPE = 2;
 
     public function __construct(
         private int $id,
@@ -35,5 +36,9 @@ class Comment implements CommentInterface
 
     public function getTableName(): string{
         return static::TABLE_NAME;
+    }
+
+    public function getEntityType(): string{
+        return static::ENTITY_TYPE;
     }
 }

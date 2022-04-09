@@ -89,7 +89,7 @@ class DIContainerTest extends TestCase
     }
 
     public function getDIContainer(): DIContainer{
-        return new DIContainer();
+        return DIContainer::getInstance();
     }
 
 }

@@ -3,6 +3,8 @@
 namespace App\Commands;
 
 use App\Drivers\ConnectionInterface;
+use App\Entities\Article\Article;
+use App\Entities\Comment\Comment;
 use App\Entities\Evaluation\Evaluation;
 use App\Exceptions\ArticleNotFoundException;
 use App\Exceptions\CommentNotFoundException;
@@ -13,77 +15,85 @@ use App\Repositories\ArticleRepositoryInterface;
 use App\Repositories\CommentRepositoryInterface;
 use App\Repositories\EvaluationRepositoryInterface;
 use App\Repositories\UserRepositoryInterface;
+use Psr\Log\LoggerInterface;
 
 class CreateEvaluationCommandHandler implements CommandHandlerInterface
 {
-
-    private \PDOStatement|false $statement;
 
     public function __construct(
         private ?EvaluationRepositoryInterface $evaluationRepository = null,
         private ?UserRepositoryInterface       $userRepository = null,
         private ?ArticleRepositoryInterface    $articleRepository = null,
         private ?CommentRepositoryInterface    $commentRepository = null,
-        private ConnectionInterface            $connection)
-    {
-        $this->statement = $connection->prepare($this->getSql());
-    }
+        private ConnectionInterface            $connection,
+        private LoggerInterface $logger){}
 
     /**
      * @throws EvaluationExistException
      * @throws UserNotFoundException
      * @throws ArticleNotFoundException
-     * @throws EvaluationNotFoundException
      * @throws CommentNotFoundException
      */
     public function handle(CommandInterface $command): void
     {
+        $this->logger->info('Create evaluation command started');
+
         /**
          * @var Evaluation $evaluation
          */
+
         $evaluation = $command->getEntity();
+
         $authorId = $evaluation->getAuthorId();
         $entityId = $evaluation->getEntityId();
         $evaluationType = $evaluation->getEvaluationType();
         $entityType = $evaluation->getEntityType();
-//        var_dump($entityType);
-//        die();
         if ($this->userRepository->getUserById($authorId)) {
             switch ($entityType) {
-                case 1: // статья
+                case Article::ENTITY_TYPE:
                     if ($this->articleRepository->getArticleById($entityId)) {
-                        if (!$this->isEvaluationExists($authorId, $entityId, $evaluationType, $entityType)) {
-                                $this->statement->execute([
-                                    ':authorId' => $authorId,
-                                    ':entityId' => $entityId,
-                                    ':evaluationType' => $evaluationType,
-                                    ':entityType' => $entityType,
-                                ]);
-                            } else {
-                                throw new EvaluationExistException();
-                            }
-                         }else throw new ArticleNotFoundException;
-                case 2: //комментарий
+                        $this->executeStatement($authorId, $entityId, $evaluationType, $entityType);
+                    }else {
+                        $this->logger->warning("The article with this id: $entityId not found");
+                        throw new ArticleNotFoundException;
+                    } break;
+
+                case Comment::ENTITY_TYPE:
                     if ($this->commentRepository->getCommentById($entityId)) {
-                        if (!$this->isEvaluationExists($authorId, $entityId, $evaluationType, $entityType)) {
-                            $this->statement->execute([
-                                ':authorId' => $authorId,
-                                ':entityId' => $entityId,
-                                ':evaluationType' => $evaluationType,
-                                ':entityType' => $entityType,
-                            ]);
-                        } else {
-                            throw new EvaluationExistException();
-                        }
-                    }else throw new CommentNotFoundException;
+                        $this->executeStatement($authorId, $entityId, $evaluationType, $entityType);
+                    }else {
+                        $this->logger->warning("The comment with this id: $entityId not found");
+                        throw new CommentNotFoundException;
+                    }
                 }
-        } else throw new UserNotFoundException;
+        } else {
+            $this->logger->warning("The user with this id: $authorId not found");
+            throw new UserNotFoundException;
+        }
+    }
+
+    /**
+     * @throws EvaluationExistException
+     */
+    public function executeStatement(int $authorId, int $entityId, int $evaluationType, int $entityType): void{
+        if (!$this->isEvaluationExists($authorId, $entityId, $evaluationType, $entityType)) {
+            $this->connection->prepare($this->getSql())->execute([
+                ':authorId' => $authorId,
+                ':entityId' => $entityId,
+                ':evaluationType' => $evaluationType,
+                ':entityType' => $entityType,
+            ]);
+        } else {
+            $this->logger->warning("The user with this id: $authorId has already rated this entity");
+            throw new EvaluationExistException();
+        }
     }
 
     public function isEvaluationExists(int $authorId, int $entityId, int $evaluationType, int $entityType): bool{
         try{
             $this->evaluationRepository->getEvaluationByAuthorIdAndEntityId($authorId, $entityId, $evaluationType, $entityType);
-        } catch (EvaluationNotFoundException){
+        }
+        catch (EvaluationNotFoundException){
             return false;
         }
         return true;

@@ -11,16 +11,15 @@ use App\Http\ErrorResponse;
 use App\Http\Request;
 use App\Http\Response;
 use App\Http\SuccessfulResponse;
+use Psr\Log\LoggerInterface;
 
 class UpdateUser implements ActionInterface
 {
 
     public function __construct(
-        private ?UpdateUserCommandHandler $updateUserCommandHandler = null
-    )
-    {
-        $this->updateUserCommandHandler = $this->updateUserCommandHandler ?? new UpdateUserCommandHandler();
-    }
+        private UpdateUserCommandHandler $updateUserCommandHandler,
+        private LoggerInterface $logger
+    ){}
 
     public function handle(Request $request): Response
     {
@@ -32,8 +31,9 @@ class UpdateUser implements ActionInterface
                 $request->jsonBodyField('email'),
             );
             $this->updateUserCommandHandler->handle(new UpdateEntityCommand($user, $id));
-        } catch (HttpException|UserNotFoundException $exception) {
-            return new ErrorResponse($exception->getMessage());
+        } catch (HttpException|UserNotFoundException $e) {
+            $this->logger->warning($e->getMessage());
+            return new ErrorResponse($e->getMessage());
         }
 
         return new SuccessfulResponse([

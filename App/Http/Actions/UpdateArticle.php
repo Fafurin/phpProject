@@ -4,26 +4,22 @@ namespace App\Http\Actions;
 
 use App\Commands\UpdateArticleCommandHandler;
 use App\Commands\UpdateEntityCommand;
-use App\Commands\UpdateUserCommandHandler;
 use App\Entities\Article\Article;
-use App\Entities\User\User;
 use App\Exceptions\ArticleNotFoundException;
 use App\Exceptions\HttpException;
-use App\Exceptions\UserNotFoundException;
 use App\Http\ErrorResponse;
 use App\Http\Request;
 use App\Http\Response;
 use App\Http\SuccessfulResponse;
+use Psr\Log\LoggerInterface;
 
 class UpdateArticle implements ActionInterface
 {
 
     public function __construct(
-        private ?UpdateArticleCommandHandler $updateArticleCommandHandler = null
-    )
-    {
-        $this->updateArticleCommandHandler = $this->updateArticleCommandHandler ?? new UpdateArticleCommandHandler();
-    }
+        private UpdateArticleCommandHandler $updateArticleCommandHandler,
+        private LoggerInterface $logger
+    ){}
 
     public function handle(Request $request): Response
     {
@@ -35,8 +31,9 @@ class UpdateArticle implements ActionInterface
                 $request->jsonBodyField('text'),
             );
             $this->updateArticleCommandHandler->handle(new UpdateEntityCommand($article, $id));
-        } catch (HttpException|ArticleNotFoundException $exception) {
-            return new ErrorResponse($exception->getMessage());
+        } catch (HttpException|ArticleNotFoundException $e) {
+            $this->logger->warning($e->getMessage());
+            return new ErrorResponse($e->getMessage());
         }
 
         return new SuccessfulResponse([

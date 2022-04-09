@@ -11,15 +11,14 @@ use App\Http\ErrorResponse;
 use App\Http\Request;
 use App\Http\Response;
 use App\Http\SuccessfulResponse;
+use Psr\Log\LoggerInterface;
 
 class UpdateComment implements ActionInterface
 {
     public function __construct(
-        private ?UpdateCommentCommandHandler $updateCommentCommandHandler = null
-    )
-    {
-        $this->updateCommentCommandHandler = $this->updateCommentCommandHandler ?? new UpdateCommentCommandHandler();
-    }
+        private UpdateCommentCommandHandler $updateCommentCommandHandler,
+        private LoggerInterface $logger
+    ){}
 
     public function handle(Request $request): Response
     {
@@ -32,8 +31,9 @@ class UpdateComment implements ActionInterface
                 $request->jsonBodyField('text'),
             );
             $this->updateCommentCommandHandler->handle(new UpdateEntityCommand($comment, $id));
-        } catch (HttpException|CommentNotFoundException $exception) {
-            return new ErrorResponse($exception->getMessage());
+        } catch (HttpException|CommentNotFoundException $e) {
+            $this->logger->warning($e->getMessage());
+            return new ErrorResponse($e->getMessage());
         }
 
         return new SuccessfulResponse([

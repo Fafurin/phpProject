@@ -2,30 +2,33 @@
 
 namespace App\Commands;
 
+use App\Drivers\ConnectionInterface;
 use App\Entities\Comment\Comment;
+use Psr\Log\LoggerInterface;
 
 class CreateCommentCommandHandler implements CommandHandlerInterface
 {
-    private \PDOStatement|false $statement;
-
     public function __construct(
-        private ConnectionInterface $connection)
-    {
-        $this->statement = $connection->prepare($this->getSql());
-    }
+        private ConnectionInterface $connection,
+        private LoggerInterface $logger){}
 
     public function handle(CommandInterface $command): void
     {
+
+        $this->logger->info('Create comment command started');
+
         /**
          * @var Comment $comment
          */
         $comment = $command->getEntity();
 
-        $this->statement->execute([
+        $this->connection->prepare($this->getSql())->execute([
             ':authorId' => $comment->getAuthorId(),
             ':articleId' => $comment->getArticleId(),
             ':text' => $comment->getText()
         ]);
+
+        $this->logger->info("Comment created");
     }
 
     public function getSql(): string

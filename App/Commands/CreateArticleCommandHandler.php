@@ -6,26 +6,25 @@ use App\Drivers\ConnectionInterface;
 use App\Entities\Article\Article;
 use App\Exceptions\ArticleNotFoundException;
 use App\Exceptions\ArticleTitleExistException;
-use App\Repositories\ArticleRepository;
 use App\Repositories\ArticleRepositoryInterface;
+use Psr\Log\LoggerInterface;
+
 
 class CreateArticleCommandHandler implements CommandHandlerInterface
 {
-    private \PDOStatement|false $statement;
-
     public function __construct(
         private ?ArticleRepositoryInterface $articleRepository = null,
-        private ConnectionInterface $connection)
-    {
-        $this->articleRepository = $this->articleRepository ?? new ArticleRepository();
-        $this->statement = $connection->prepare($this->getSql());
-    }
+        private ConnectionInterface $connection,
+        private LoggerInterface $logger)
+    {}
 
     /**
      * @throws ArticleTitleExistException
      */
     public function handle(CommandInterface $command): void
     {
+        $this->logger->info('Create article command started');
+
         /**
          * @var Article $article
          */
@@ -34,12 +33,16 @@ class CreateArticleCommandHandler implements CommandHandlerInterface
         $title = $article->getTitle();
 
         if(!$this->isArticleExists($title)) {
-            $this->statement->execute([
+            $this->connection->prepare($this->getSql())->execute([
                 ':authorId' => $article->getAuthorId(),
                 ':title' => $article->getTitle(),
                 ':text' => $article->getText()
             ]);
+
+            $this->logger->info("Article created with title: $title");
+
         }else{
+            $this->logger->warning("The article with this title: $title already exists");
             throw new ArticleTitleExistException();
         }
     }

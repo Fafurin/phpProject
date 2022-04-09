@@ -13,28 +13,35 @@ use App\Enums\Argument;
 use App\Exceptions\NotFoundException;
 use App\Factories\EntityManagerFactory;
 use App\Factories\EntityManagerFactoryInterface;
+use Psr\Log\LoggerInterface;
 
-try {
-    if(count($argv) < 2)
-    {
-        throw new NotFoundException('404');
-    }
-
-    if(!in_array($argv[1], Argument::getArgumentValues()))
-    {
-        throw new NotFoundException('404');
-    }
+/**
+ * @var DIContainer $container
+ */
+if(isset($container))
+{
     /**
-     * @var EntityManagerFactoryInterface $entityMangerFactory
+     * @var LoggerInterface $logger
      */
-    $entityMangerFactory = new EntityManagerFactory();
-    $entity =  $entityMangerFactory->createEntityByInputArgs($argv);
+    $logger = $container->get(LoggerInterface::class);
 
-    /**
-     * @var DIContainer $container
-     */
-    if(isset($container))
-    {
+    try {
+        if(count($argv) < 2)
+        {
+            throw new NotFoundException('404');
+        }
+
+        if(!in_array($argv[1], Argument::getArgumentValues()))
+        {
+            throw new NotFoundException('404');
+        }
+        /**
+         * @var EntityManagerFactoryInterface $entityMangerFactory
+         */
+        $entityMangerFactory = new EntityManagerFactory();
+        $entity =  $entityMangerFactory->createEntityByInputArgs($argv);
+
+
         /**
          * @var CommandHandlerInterface $commandHandler
          */
@@ -46,10 +53,13 @@ try {
         };
 
         $commandHandler->handle(new CreateEntityCommand($entity));
-    }
 
-}catch (Exception $exception)
-{
-    echo $exception->getMessage().PHP_EOL;
-    http_response_code(404);
+
+    }catch (Exception $exception)
+    {
+        $logger->error($exception->getMessage(), ['exception' => $exception]);
+
+        echo $exception->getMessage().PHP_EOL;
+        http_response_code(404);
+    }
 }

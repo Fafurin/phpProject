@@ -2,6 +2,7 @@
 
 namespace Test\Actions;
 
+use App\Container\DIContainer;
 use App\Entities\User\User;
 use App\Exceptions\UserNotFoundException;
 use App\Http\Actions\FindUserByEmail;
@@ -10,6 +11,9 @@ use App\Http\Request;
 use App\Http\SuccessfulResponse;
 use App\Repositories\UserRepositoryInterface;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
+use Test\Dummy\DummyLogger;
 
 class FindUserByEmailTest extends TestCase
 {
@@ -22,7 +26,7 @@ class FindUserByEmailTest extends TestCase
         $request = new Request([], [], '');
         $userRepository = $this->getUserRepository([]);
 
-        $action = new FindUserByEmail($userRepository);
+        $action = new FindUserByEmail($userRepository, $this->getLogger());
         $response = $action->handle($request);
 
         $this->assertInstanceOf(ErrorResponse::class, $response);
@@ -43,7 +47,7 @@ class FindUserByEmailTest extends TestCase
         $request = new Request(['email' => 'vano@mail.com'], [], '');
 
         $usersRepository = $this->getUserRepository([]);
-        $action = new FindUserByEmail($usersRepository);
+        $action = new FindUserByEmail($usersRepository, $this->getLogger());
 
         $response = $action->handle($request);
         $this->assertInstanceOf(ErrorResponse::class, $response);
@@ -68,7 +72,7 @@ class FindUserByEmailTest extends TestCase
             ),
         ]);
 
-        $action = new FindUserByEmail($usersRepository);
+        $action = new FindUserByEmail($usersRepository, $this->getLogger());
         $response = $action->handle($request);
 
         $this->assertInstanceOf(SuccessfulResponse::class, $response);
@@ -107,5 +111,19 @@ class FindUserByEmailTest extends TestCase
                 throw new UserNotFoundException("Not found");
             }
         };
+    }
+
+    private function getLogger(): LoggerInterface{
+        return $this->getContainer()->get(LoggerInterface::class);
+    }
+
+    private function getContainer(): ContainerInterface {
+        $container = DIContainer::getInstance();
+
+        $container->bind(
+            LoggerInterface::class,
+            new DummyLogger()
+        );
+        return $container;
     }
 }

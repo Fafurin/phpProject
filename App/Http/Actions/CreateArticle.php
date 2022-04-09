@@ -11,16 +11,15 @@ use App\Http\ErrorResponse;
 use App\Http\Request;
 use App\Http\Response;
 use App\Http\SuccessfulResponse;
+use Psr\Log\LoggerInterface;
 
 class CreateArticle implements ActionInterface
 {
 
     public function __construct(
-        private ?CreateArticleCommandHandler $createArticleCommandHandler = null
-    )
-    {
-        $this->createArticleCommandHandler = $this->createArticleCommandHandler ?? new CreateArticleCommandHandler();
-    }
+        private CreateArticleCommandHandler $createArticleCommandHandler,
+        private LoggerInterface $logger
+    ){}
 
     public function handle(Request $request): Response
     {
@@ -31,8 +30,9 @@ class CreateArticle implements ActionInterface
                 $request->jsonBodyField('text'),
             );
             $this->createArticleCommandHandler->handle(new CreateEntityCommand($article));
-        } catch (HttpException|ArticleTitleExistException $exception) {
-            return new ErrorResponse($exception->getMessage());
+        } catch (HttpException|ArticleTitleExistException $e) {
+            $this->logger->warning($e->getMessage());
+            return new ErrorResponse($e->getMessage());
         }
 
         return new SuccessfulResponse([

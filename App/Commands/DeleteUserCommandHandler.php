@@ -2,30 +2,28 @@
 
 namespace App\Commands;
 
-use App\Connections\ConnectorInterface;
-use App\Connections\SqLiteConnector;
+use App\Drivers\ConnectionInterface;
 use App\Entities\User\User;
 use App\Exceptions\UserNotFoundException;
-use App\Repositories\UserRepository;
 use App\Repositories\UserRepositoryInterface;
+use Psr\Log\LoggerInterface;
 
 class DeleteUserCommandHandler implements CommandHandlerInterface
 {
-    private \PDOStatement|false $statement;
 
     public function __construct(
         private ?UserRepositoryInterface $userRepository = null,
-        private ?ConnectorInterface $connector = null)
-    {
-        $this->userRepository = $this->userRepository ?? new UserRepository();
-        $this->connector = $connector ?? new SqLiteConnector();
-        $this->statement =$this->connector->getConnection()->prepare($this->getSql());
-    }
+        private ConnectionInterface $connection,
+        private LoggerInterface $logger)
+    {}
 
     /**
      * @throws UserNotFoundException
      */
     public function handle(CommandInterface $command): void{
+
+        $this->logger->info('Delete user command started');
+
         /**
          * @var User $user
          */
@@ -33,10 +31,11 @@ class DeleteUserCommandHandler implements CommandHandlerInterface
         $id = $command->getId();
 
         if($this->isUserExists($id)) {
-            $this->statement->execute([
+            $this->connection->prepare($this->getSql())->execute([
                 ':id' => (string)$id
             ]);
         }else{
+            $this->logger->warning("The user with this id: $id not found");
             throw new UserNotFoundException();
         }
     }

@@ -11,14 +11,14 @@ use App\Http\ErrorResponse;
 use App\Http\Request;
 use App\Http\Response;
 use App\Http\SuccessfulResponse;
+use Psr\Log\LoggerInterface;
 
 class CreateUser implements ActionInterface
 {
     public function __construct(
-        private ?CreateUserCommandHandler $createUserCommandHandler = null
-    ){
-        $this->createUserCommandHandler = $this->createUserCommandHandler ?? new CreateUserCommandHandler();
-    }
+        private CreateUserCommandHandler $createUserCommandHandler,
+        private LoggerInterface $logger
+    ){}
 
     public function handle(Request $request): Response
     {
@@ -29,8 +29,9 @@ class CreateUser implements ActionInterface
                 $request->jsonBodyField('email'),
             );
             $this->createUserCommandHandler->handle(new CreateEntityCommand($user));
-        }catch (HttpException|UserEmailExistException $exception){
-            return new ErrorResponse($exception->getMessage());
+        }catch (HttpException|UserEmailExistException $e){
+            $this->logger->warning($e->getMessage());
+            return new ErrorResponse($e->getMessage());
         }
 
         return new SuccessfulResponse([

@@ -5,6 +5,8 @@ namespace App\Entities\Evaluation;
 class Evaluation implements EvaluationInterface
 {
     public const TABLE_NAME = 'evaluations';
+    public const LIKE_TYPE = '1';
+    public const DISLIKE_TYPE = '2';
 
     private ?int $id = null;
 
