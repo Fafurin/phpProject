@@ -5,6 +5,7 @@ namespace App\Entities\Article;
 class Article implements ArticleInterface
 {
     public const TABLE_NAME = 'articles';
+    public const ENTITY_TYPE = 1;
 
     private ?int $id = null;
 
@@ -35,5 +36,9 @@ class Article implements ArticleInterface
 
     public function getTableName(): string{
         return static::TABLE_NAME;
+    }
+
+    public function getEntityType(): string{
+        return static::ENTITY_TYPE;
     }
 }

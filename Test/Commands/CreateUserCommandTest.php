@@ -5,24 +5,24 @@ namespace Test\Commands;
 use App\Commands\CreateEntityCommand;
 use App\Commands\CreateUserCommandHandler;
 use App\config\SqLiteConfig;
-use App\Connections\SqLiteConnector;
-use App\Drivers\PdoConnectionDriver;
+use App\Container\DIContainer;
+use App\Drivers\ConnectionInterface;
 use App\Entities\User\User;
 use App\Exceptions\UserNotFoundException;
 use App\Repositories\UserRepository;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
+use Test\Dummy\DummyConnector;
+use Test\Dummy\DummyLogger;
 
 class CreateUserCommandTest extends TestCase
 {
     public function testItSavesUserToDatabase(): void
     {
-        $connectionStub = $this->createStub(SqLiteConnector::class);
-        $connectionStub->method('getConnection')
-            ->willReturn(new PdoConnectionDriver(SqLiteConfig::DSN));
+        $repository = new UserRepository($this->getConnection(), $this->getLogger());
 
-        $repository = new UserRepository($connectionStub);
-
-        $createUserCommandHandler = new CreateUserCommandHandler($repository);
+        $createUserCommandHandler = new CreateUserCommandHandler($repository, $this->getConnection(), $this->getLogger());
 
         $this->expectException(UserNotFoundException::class);
         $this->expectExceptionMessage("User not found");
@@ -34,5 +34,28 @@ class CreateUserCommandTest extends TestCase
                 'test@user.ru'));
 
         $createUserCommandHandler->handle($command);
+    }
+
+    private function getLogger(): LoggerInterface{
+        return $this->getContainer()->get(LoggerInterface::class);
+    }
+
+    private function getConnection(): ConnectionInterface{
+        return $this->getContainer()->get(ConnectionInterface::class);
+    }
+
+    private function getContainer(): ContainerInterface {
+        $container = DIContainer::getInstance();
+
+        $container->bind(
+            ConnectionInterface::class,
+            new DummyConnector(SqLiteConfig::DSN)
+        );
+
+        $container->bind(
+            LoggerInterface::class,
+            new DummyLogger()
+        );
+        return $container;
     }
 }

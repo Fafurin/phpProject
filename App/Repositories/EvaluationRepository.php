@@ -2,13 +2,22 @@
 
 namespace App\Repositories;
 
+use App\Drivers\ConnectionInterface;
 use App\Entities\Evaluation\Evaluation;
 use App\Exceptions\EvaluationNotFoundException;
 use PDO;
 use PDOStatement;
+use Psr\Log\LoggerInterface;
 
 class EvaluationRepository extends EntityRepository implements EvaluationRepositoryInterface
 {
+
+    public function __construct(
+        ConnectionInterface $connection,
+        private LoggerInterface $logger)
+    {
+        parent::__construct($connection);
+    }
     /**
      * @throws EvaluationNotFoundException
      */
@@ -29,6 +38,7 @@ class EvaluationRepository extends EntityRepository implements EvaluationReposit
         $evaluationData = $statement->fetch(PDO::FETCH_OBJ);
 
         if (!$evaluationData) {
+            $this->logger->error("Evaluation not found");
             throw new EvaluationNotFoundException();
         }
 
@@ -51,15 +61,15 @@ class EvaluationRepository extends EntityRepository implements EvaluationReposit
         } elseif($entityType == 2){
             $tableName = "comments";
         }
-
         $statement = $this->connection->prepare(
-            'SELECT * FROM evaluations e 
-                  LEFT JOIN ' . $tableName . ' c 
-                  ON e.entity_id = c.id 
-                  WHERE e.author_id = :authorId 
-                  AND e.entity_id = :entityId 
-                  AND e.evaluation_type = :evaluationType 
-                  AND e.entity_type = :entityType'
+            'SELECT evaluations.author_id, entity_id, evaluation_type, entity_type 
+                   FROM evaluations evaluations 
+                   LEFT JOIN ' . $tableName . ' entities 
+                   ON evaluations.entity_id = entities.id 
+                   WHERE evaluations.author_id = :authorId 
+                   AND evaluations.entity_id = :entityId 
+                   AND evaluations.evaluation_type = :evaluationType 
+                   AND evaluations.entity_type = :entityType'
         );
 
         $statement->execute([

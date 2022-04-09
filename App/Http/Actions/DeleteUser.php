@@ -10,23 +10,23 @@ use App\Http\ErrorResponse;
 use App\Http\Request;
 use App\Http\Response;
 use App\Http\SuccessfulResponse;
+use Psr\Log\LoggerInterface;
 
 class DeleteUser implements ActionInterface
 {
     public function __construct(
-        private ?DeleteUserCommandHandler $deleteUserCommandHandler = null
-    )
-    {
-        $this->deleteUserCommandHandler = $this->deleteUserCommandHandler ?? new DeleteUserCommandHandler();
-    }
+        private DeleteUserCommandHandler $deleteUserCommandHandler,
+        private LoggerInterface $logger
+    ){}
 
     public function handle(Request $request): Response
     {
         try {
             $id = $request->jsonBodyField('id');
             $this->deleteUserCommandHandler->handle(new DeleteEntityCommand($id));
-        } catch (HttpException|UserNotFoundException $exception) {
-            return new ErrorResponse($exception->getMessage());
+        } catch (HttpException|UserNotFoundException $e) {
+            $this->logger->warning($e->getMessage());
+            return new ErrorResponse($e->getMessage());
         }
 
         return new SuccessfulResponse([

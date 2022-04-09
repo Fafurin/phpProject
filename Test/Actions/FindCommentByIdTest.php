@@ -2,6 +2,7 @@
 
 namespace Test\Actions;
 
+use App\Container\DIContainer;
 use App\Entities\Comment\Comment;
 use App\Exceptions\CommentNotFoundException;
 use App\Http\Actions\FindCommentById;
@@ -10,6 +11,9 @@ use App\Http\Request;
 use App\Http\SuccessfulResponse;
 use App\Repositories\CommentRepositoryInterface;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
+use Test\Dummy\DummyLogger;
 
 class FindCommentByIdTest extends TestCase
 {
@@ -22,7 +26,7 @@ class FindCommentByIdTest extends TestCase
         $request = new Request([], [], '');
         $commentRepository = $this->getCommentRepository([]);
 
-        $action = new FindCommentById($commentRepository);
+        $action = new FindCommentById($commentRepository, $this->getLogger());
         $response = $action->handle($request);
 
         $this->assertInstanceOf(ErrorResponse::class, $response);
@@ -43,7 +47,7 @@ class FindCommentByIdTest extends TestCase
         $request = new Request(['id' => '15'], [], '');
 
         $commentRepository = $this->getCommentRepository([]);
-        $action = new FindCommentById($commentRepository);
+        $action = new FindCommentById($commentRepository, $this->getLogger());
 
         $response = $action->handle($request);
         $this->assertInstanceOf(ErrorResponse::class, $response);
@@ -69,7 +73,7 @@ class FindCommentByIdTest extends TestCase
             ),
         ]);
 
-        $action = new FindCommentById($commentRepository);
+        $action = new FindCommentById($commentRepository, $this->getLogger());
 
         $response = $action->handle($request);
 
@@ -106,5 +110,19 @@ class FindCommentByIdTest extends TestCase
                 throw new CommentNotFoundException("Cannot find comment");
             }
         };
+    }
+
+    private function getLogger(): LoggerInterface{
+        return $this->getContainer()->get(LoggerInterface::class);
+    }
+
+    private function getContainer(): ContainerInterface {
+        $container = DIContainer::getInstance();
+
+        $container->bind(
+            LoggerInterface::class,
+            new DummyLogger()
+        );
+        return $container;
     }
 }

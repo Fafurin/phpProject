@@ -18,8 +18,14 @@ use App\Http\Actions\UpdateComment;
 use App\Http\Actions\UpdateUser;
 use App\Http\ErrorResponse;
 use App\Http\Request;
+use Psr\Log\LoggerInterface;
 
 $container = require __DIR__ . '/bootstrap.php';
+
+/**
+ * @var LoggerInterface $logger
+ */
+$logger = $container->get(LoggerInterface::class);
 
 $request = new Request(
     $_GET,
@@ -30,14 +36,16 @@ $request = new Request(
 try {
     $path = $request->path();
 
-} catch (HttpException) {
+} catch (HttpException $exception) {
+    $logger->warning($exception->getMessage());
     (new ErrorResponse)->send();
     return;
 }
 
 try {
     $method = $request->method();
-} catch (HttpException) {
+} catch (HttpException $exception) {
+    $logger->warning($exception->getMessage());
     (new ErrorResponse)->send();
     return;
 }
@@ -67,11 +75,13 @@ $routes = [
 ];
 
 if (!array_key_exists($method, $routes)) {
+    $logger->info(sprintf('А user from the ip-address: %s tried to access a non-existent route', $_SERVER['REMOTE_ADDR']));
     (new ErrorResponse('Not found'))->send();
     return;
 }
 
 if (!array_key_exists($path, $routes[$method])) {
+    $logger->info("Route not found");
     (new ErrorResponse('Not found'))->send();
     return;
 }
@@ -82,8 +92,9 @@ $action = $container->get($actionClassName);
 
 try {
     $response = $action->handle($request);
-} catch (Exception $e) {
-    (new ErrorResponse($e->getMessage()))->send();
+} catch (Exception $exception) {
+    $logger->error($exception->getMessage());
+    (new ErrorResponse($exception->getMessage()))->send();
 }
 
 $response->send();

@@ -2,6 +2,7 @@
 
 namespace Test\Actions;
 
+use App\Container\DIContainer;
 use App\Entities\Article\Article;
 use App\Exceptions\ArticleNotFoundException;
 use App\Http\ErrorResponse;
@@ -10,6 +11,9 @@ use App\Http\SuccessfulResponse;
 use App\Repositories\ArticleRepositoryInterface;
 use App\Http\Actions\FindArticleByTitle;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
+use Test\Dummy\DummyLogger;
 
 class FindArticleByTitleTest extends TestCase
 {
@@ -22,7 +26,7 @@ class FindArticleByTitleTest extends TestCase
         $request = new Request([], [], '');
         $articleRepository = $this->getArticleRepository([]);
 
-        $action = new FindArticleByTitle($articleRepository);
+        $action = new FindArticleByTitle($articleRepository, $this->getLogger());
         $response = $action->handle($request);
 
         $this->assertInstanceOf(ErrorResponse::class, $response);
@@ -43,7 +47,7 @@ class FindArticleByTitleTest extends TestCase
         $request = new Request(['title' => 'Test title'], [], '');
 
         $articleRepository = $this->getArticleRepository([]);
-        $action = new FindArticleByTitle($articleRepository);
+        $action = new FindArticleByTitle($articleRepository, $this->getLogger());
 
         $response = $action->handle($request);
         $this->assertInstanceOf(ErrorResponse::class, $response);
@@ -68,7 +72,7 @@ class FindArticleByTitleTest extends TestCase
             ),
         ]);
 
-        $action = new FindArticleByTitle($articleRepository);
+        $action = new FindArticleByTitle($articleRepository, $this->getLogger());
         $response = $action->handle($request);
 
         $this->assertInstanceOf(SuccessfulResponse::class, $response);
@@ -108,4 +112,18 @@ class FindArticleByTitleTest extends TestCase
             }
         };
     }
+    private function getLogger(): LoggerInterface{
+        return $this->getContainer()->get(LoggerInterface::class);
+    }
+
+    private function getContainer(): ContainerInterface {
+        $container = DIContainer::getInstance();
+
+        $container->bind(
+            LoggerInterface::class,
+            new DummyLogger()
+        );
+        return $container;
+    }
+
 }
