@@ -10,6 +10,7 @@ class UserDecorator extends Decorator implements DecoratorInterface
     public ?string $firstName;
     public ?string $lastName;
     public ?string $email;
+    public ?string $password;
 
     public function __construct(array $arguments)
     {
@@ -21,6 +22,7 @@ class UserDecorator extends Decorator implements DecoratorInterface
         $this->firstName = $userFieldData->get(User::FIRST_NAME->value) ?? null;
         $this->lastName = $userFieldData->get(User::LAST_NAME->value) ?? null;
         $this->email = $userFieldData->get(User::EMAIL->value) ?? null;
+        $this->password = $userFieldData->get(User::PASSWORD->value) ?? null;
     }
 
     public function getRequiredFields(): array

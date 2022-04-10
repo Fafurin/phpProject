@@ -22,7 +22,7 @@ class UserRepository extends EntityRepository implements UserRepositoryInterface
     /**
      * @throws UserNotFoundException
      */
-    public function get(int $id): User
+    public function findById(int $id): User
     {
         $statement = $this->connection->prepare('SELECT * FROM ' . USER::TABLE_NAME . ' WHERE id = :id');
         $statement->execute([
@@ -43,11 +43,14 @@ class UserRepository extends EntityRepository implements UserRepositoryInterface
             throw new UserNotFoundException("User not found");
         }
 
-        return new User(
+        $user = new User(
             $userData->first_name,
             $userData->last_name,
-            $userData->email
+            $userData->email,
+            $userData->password
         );
+        $user->setId($userData->id);
+        return $user;
     }
 
     public function getUserByEmail(string $email): User
@@ -58,18 +61,6 @@ class UserRepository extends EntityRepository implements UserRepositoryInterface
 
         $statement->execute([
            ':email' => $email,
-        ]);
-        return $this->getUser($statement);
-    }
-
-    public function getUserById(int $id): User
-    {
-        $statement = $this->connection->prepare(
-            'SELECT * FROM ' . USER::TABLE_NAME . ' WHERE id = :id'
-        );
-
-        $statement->execute([
-            ':id' => $id,
         ]);
         return $this->getUser($statement);
     }

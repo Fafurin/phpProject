@@ -4,6 +4,11 @@ use App\config\SqLiteConfig;
 use App\Container\DIContainer;
 use App\Drivers\ConnectionInterface;
 use App\Drivers\PdoConnectionDriver;
+use App\Http\Auth\AuthenticationInterface;
+use App\Http\Auth\IdentificationInterface;
+use App\Http\Auth\JsonBodyUserEmailIdentification;
+use App\Http\Auth\JsonBodyUserIdIdentification;
+use App\Http\Auth\PasswordAuthentication;
 use App\Repositories\ArticleRepository;
 use App\Repositories\ArticleRepositoryInterface;
 use App\Repositories\CommentRepository;
@@ -51,6 +56,21 @@ $container->bind(
 $container->bind(
     LoggerInterface::class,
     new Logger('project')
+);
+
+//$container->bind(
+//    IdentificationInterface::class,
+//    JsonBodyUserIdIdentification::class
+//);
+
+$container->bind(
+    IdentificationInterface::class,
+    JsonBodyUserEmailIdentification::class
+);
+
+$container->bind(
+    AuthenticationInterface::class,
+    PasswordAuthentication::class
 );
 
 $logger = new Logger('project');

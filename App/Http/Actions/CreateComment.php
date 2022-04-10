@@ -4,8 +4,12 @@ namespace App\Http\Actions;
 
 use App\Commands\CreateCommentCommandHandler;
 use App\Commands\CreateEntityCommand;
+use App\Container\DIContainer;
 use App\Entities\Comment\Comment;
+use App\Exceptions\ArticleNotFoundException;
 use App\Exceptions\HttpException;
+use App\Exceptions\UserNotFoundException;
+use App\Http\Auth\AuthenticationInterface;
 use App\Http\ErrorResponse;
 use App\Http\Request;
 use App\Http\Response;
@@ -16,26 +20,34 @@ class CreateComment implements ActionInterface
 {
     public function __construct(
         private CreateCommentCommandHandler $createCommentCommandHandler,
-        private LoggerInterface $logger
+        private AuthenticationInterface $authentication
     ){}
 
     public function handle(Request $request): Response
     {
+        $logger = DIContainer::getInstance()->get(LoggerInterface::class);
+
         try {
             $comment = new Comment(
-                $request->jsonBodyField('id'),
-                $request->jsonBodyField('authorId'),
+                $this->authentication->getUser($request),
                 $request->jsonBodyField('articleId'),
                 $request->jsonBodyField('text'),
             );
             $this->createCommentCommandHandler->handle(new CreateEntityCommand($comment));
-        } catch (HttpException $e) {
-            $this->logger->warning($e->getMessage());
+        } catch (HttpException|ArticleNotFoundException|UserNotFoundException $e) {
+            $logger->warning($e->getMessage());
             return new ErrorResponse($e->getMessage());
         }
 
-        return new SuccessfulResponse([
+        $data = [
+            'authorId' => $comment->getAuthor()->getId(),
+            'title' => $comment->getArticleId(),
             'text' => $comment->getText()
-        ]);
+        ];
+
+        $logger->info('Created new comment', $data);
+
+        return new SuccessfulResponse($data);
+
     }
 }

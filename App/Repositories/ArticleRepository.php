@@ -13,6 +13,7 @@ class ArticleRepository extends EntityRepository implements ArticleRepositoryInt
 {
     public function __construct(
         ConnectionInterface $connection,
+        private UserRepositoryInterface $userRepository,
         private LoggerInterface $logger)
     {
         parent::__construct($connection);
@@ -21,7 +22,7 @@ class ArticleRepository extends EntityRepository implements ArticleRepositoryInt
     /**
      * @throws ArticleNotFoundException
      */
-    public function get(int $id): Article
+    public function findById(int $id): Article
     {
         $statement = $this->connection->prepare('SELECT * FROM ' . ARTICLE::TABLE_NAME . ' WHERE id = :id');
         $statement->execute([
@@ -40,12 +41,14 @@ class ArticleRepository extends EntityRepository implements ArticleRepositoryInt
             $this->logger->error("Article not found");
             throw new ArticleNotFoundException("Article not found");
         }
-
-        return new Article(
-            $articleData->author_id,
+        $article = new Article(
+            $this->userRepository->findById($articleData->author_id),
             $articleData->title,
             $articleData->text
         );
+
+        $article->setId($articleData->id);
+        return $article;
     }
 
     /**
@@ -71,10 +74,9 @@ class ArticleRepository extends EntityRepository implements ArticleRepositoryInt
         );
 
         $statement->execute([
-            ':id' => $id
+            ':id' => (string)$id
         ]);
 
         return $this->getArticle($statement);
     }
-
 }

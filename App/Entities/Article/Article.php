@@ -2,36 +2,27 @@
 
 namespace App\Entities\Article;
 
+use App\Entities\User\User;
+use App\Traits\Author;
+use App\Traits\Id;
+use App\Traits\Text;
+use App\Traits\Title;
+
 class Article implements ArticleInterface
 {
+    use Id;
+    use Title;
+    use Text;
+    use Author;
+
     public const TABLE_NAME = 'articles';
     public const ENTITY_TYPE = 1;
 
-    private ?int $id = null;
-
-    public function __construct(
-        private int $authorId,
-        private string $title,
-        private string $text
-    ){}
-
-    public function getId():?int
+    public function __construct(User $author, string $title, string $text)
     {
-        return $this->id;
-    }
-
-    public function getAuthorId(): int
-    {
-        return $this->authorId;
-    }
-
-    public function getTitle(): string
-    {
-        return $this->title;
-    }
-
-    public function getText(): string{
-        return $this->text;
+        $this->author = $author;
+        $this->title = $title;
+        $this->text = $text;
     }
 
     public function getTableName(): string{

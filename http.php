@@ -76,13 +76,13 @@ $routes = [
 
 if (!array_key_exists($method, $routes)) {
     $logger->info(sprintf('А user from the ip-address: %s tried to access a non-existent route', $_SERVER['REMOTE_ADDR']));
-    (new ErrorResponse('Not found'))->send();
+    (new ErrorResponse('Method not found'))->send();
     return;
 }
 
 if (!array_key_exists($path, $routes[$method])) {
     $logger->info("Route not found");
-    (new ErrorResponse('Not found'))->send();
+    (new ErrorResponse('Path not found'))->send();
     return;
 }
 

@@ -89,17 +89,9 @@ class FindCommentByIdTest extends TestCase
 
             public function __construct(
                 private array $comments
-            )
-            {
-            }
+            ) {}
 
-
-            public function get(int $id): Comment
-            {
-                throw new CommentNotFoundException("Cannot find comment");
-            }
-
-            public function getCommentById(int $id): Comment
+            public function findById(int $id): Comment
             {
                 foreach ($this->comments as $comment) {
                     if ($comment instanceof Comment && $id === $comment->getId()) {
