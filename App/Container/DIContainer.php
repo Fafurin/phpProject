@@ -16,8 +16,9 @@ class DIContainer implements ContainerInterface
 
     private array $resolvers = [];
 
-    public function bind(string $type, string|object $class){
+    public function bind(string $type, string|object $class): self{
         $this->resolvers[$type] = $class;
+        return $this;
     }
 
     public function get(string $type): object

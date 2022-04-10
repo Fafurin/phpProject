@@ -44,14 +44,15 @@ class CreateEvaluationCommandHandler implements CommandHandlerInterface
 
         $evaluation = $command->getEntity();
 
-        $authorId = $evaluation->getAuthorId();
+        $authorId = $evaluation->getAuthor()->getId();
         $entityId = $evaluation->getEntityId();
         $evaluationType = $evaluation->getEvaluationType();
         $entityType = $evaluation->getEntityType();
-        if ($this->userRepository->getUserById($authorId)) {
+
+        if ($this->userRepository->findById($authorId)) {
             switch ($entityType) {
                 case Article::ENTITY_TYPE:
-                    if ($this->articleRepository->getArticleById($entityId)) {
+                    if ($this->articleRepository->findById($entityId)) {
                         $this->executeStatement($authorId, $entityId, $evaluationType, $entityType);
                     }else {
                         $this->logger->warning("The article with this id: $entityId not found");
@@ -59,7 +60,7 @@ class CreateEvaluationCommandHandler implements CommandHandlerInterface
                     } break;
 
                 case Comment::ENTITY_TYPE:
-                    if ($this->commentRepository->getCommentById($entityId)) {
+                    if ($this->commentRepository->findById($entityId)) {
                         $this->executeStatement($authorId, $entityId, $evaluationType, $entityType);
                     }else {
                         $this->logger->warning("The comment with this id: $entityId not found");

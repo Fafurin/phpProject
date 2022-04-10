@@ -13,7 +13,7 @@ use Psr\Log\LoggerInterface;
 class CreateArticleCommandHandler implements CommandHandlerInterface
 {
     public function __construct(
-        private ?ArticleRepositoryInterface $articleRepository = null,
+        private ArticleRepositoryInterface $articleRepository,
         private ConnectionInterface $connection,
         private LoggerInterface $logger)
     {}
@@ -34,7 +34,7 @@ class CreateArticleCommandHandler implements CommandHandlerInterface
 
         if(!$this->isArticleExists($title)) {
             $this->connection->prepare($this->getSql())->execute([
-                ':authorId' => $article->getAuthorId(),
+                ':authorId' => $article->getAuthor()->getId(),
                 ':title' => $article->getTitle(),
                 ':text' => $article->getText()
             ]);

@@ -9,5 +9,5 @@ abstract class EntityRepository implements EntityRepositoryInterface
 {
     public function __construct(protected ConnectionInterface $connection){}
 
-    abstract public function get(int $id): EntityInterface;
+    abstract public function findById(int $id): EntityInterface;
 }

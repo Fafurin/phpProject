@@ -23,7 +23,7 @@ class CreateCommentCommandHandler implements CommandHandlerInterface
         $comment = $command->getEntity();
 
         $this->connection->prepare($this->getSql())->execute([
-            ':authorId' => $comment->getAuthorId(),
+            ':authorId' => $comment->getAuthor()->getId(),
             ':articleId' => $comment->getArticleId(),
             ':text' => $comment->getText()
         ]);

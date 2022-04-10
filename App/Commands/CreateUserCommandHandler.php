@@ -12,7 +12,7 @@ use Psr\Log\LoggerInterface;
 class CreateUserCommandHandler implements CommandHandlerInterface
 {
     public function __construct(
-        private ?UserRepositoryInterface $userRepository = null,
+        private UserRepositoryInterface $userRepository,
         private ConnectionInterface $connection,
         private LoggerInterface $logger){}
 
@@ -34,7 +34,8 @@ class CreateUserCommandHandler implements CommandHandlerInterface
             $this->connection->prepare($this->getSql())->execute([
                 ':firstName' => $user->getFirstName(),
                 ':lastName' => $user->getLastName(),
-                ':email' => $email
+                ':email' => $email,
+                ':password' => $user->setPassword($user->getPassword()),
             ]);
 
             $this->logger->info("User created with the email: $email");
@@ -56,7 +57,7 @@ class CreateUserCommandHandler implements CommandHandlerInterface
 
     public function getSql(): string
     {
-        return "INSERT INTO " . User::TABLE_NAME ." (first_name, last_name, email) 
-                 VALUES (:firstName, :lastName, :email)";
+        return "INSERT INTO " . User::TABLE_NAME ." (first_name, last_name, email, password) 
+                 VALUES (:firstName, :lastName, :email, :password)";
     }
 }

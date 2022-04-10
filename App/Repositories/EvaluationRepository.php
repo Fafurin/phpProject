@@ -14,6 +14,7 @@ class EvaluationRepository extends EntityRepository implements EvaluationReposit
 
     public function __construct(
         ConnectionInterface $connection,
+        private UserRepositoryInterface $userRepository,
         private LoggerInterface $logger)
     {
         parent::__construct($connection);
@@ -21,7 +22,7 @@ class EvaluationRepository extends EntityRepository implements EvaluationReposit
     /**
      * @throws EvaluationNotFoundException
      */
-    public function get(int $id): Evaluation
+    public function findById(int $id): Evaluation
     {
         $statement = $this->connection->prepare('SELECT * FROM ' . Evaluation::TABLE_NAME . ' WHERE id = :id');
         $statement->execute([
@@ -42,12 +43,15 @@ class EvaluationRepository extends EntityRepository implements EvaluationReposit
             throw new EvaluationNotFoundException();
         }
 
-        return new Evaluation(
-            $evaluationData->author_id,
+        $evaluation = new Evaluation(
+            $this->userRepository->findById($evaluationData->author_id),
             $evaluationData->entity_id,
             $evaluationData->evaluation_type,
             $evaluationData->entity_type,
         );
+
+        $evaluation->setId($evaluationData->id);
+        return $evaluation;
     }
 
     /**

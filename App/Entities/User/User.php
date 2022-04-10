@@ -2,22 +2,20 @@
 
 namespace App\Entities\User;
 
+use App\Traits\Id;
+
 class User implements UserInterface
 {
-    public const TABLE_NAME = 'users';
+    use Id;
 
-    private ?int $id = null;
+    public const TABLE_NAME = 'users';
 
     public function __construct(
         private string $firstName,
         private string $lastName,
-        private string $email
+        private string $email,
+        private string $password
     ){}
-
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
 
     public function getFirstName(): string{
         return $this->firstName;
@@ -29,6 +27,25 @@ class User implements UserInterface
 
     public function getEmail(): string{
         return $this->email;
+    }
+
+    public function hash(string $password, string $email): string{
+        return hash('sha256', $email . $password);
+    }
+
+    public function checkPassword(string $password): bool{
+        return $this->password === self::hash($password, $this->getEmail());
+    }
+
+    public function getPassword(): string
+    {
+        return $this->password;
+    }
+
+    public function setPassword(string $password):string
+    {
+        $this->password = self::hash($password, $this->email);
+        return $this->password;
     }
 
     public function getTableName(): string{

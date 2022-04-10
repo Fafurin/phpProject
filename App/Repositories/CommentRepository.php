@@ -13,6 +13,7 @@ class CommentRepository extends EntityRepository implements CommentRepositoryInt
 
     public function __construct(
         ConnectionInterface $connection,
+        private UserRepositoryInterface $userRepository,
         private LoggerInterface $logger)
     {
         parent::__construct($connection);
@@ -21,7 +22,7 @@ class CommentRepository extends EntityRepository implements CommentRepositoryInt
     /**
      * @throws CommentNotFoundException
      */
-    public function get(int $id): Comment
+    public function findById(int $id): Comment
     {
         $statement = $this->connection->prepare('SELECT * FROM ' . COMMENT::TABLE_NAME . ' WHERE id = :id');
         $statement->execute([
@@ -41,26 +42,11 @@ class CommentRepository extends EntityRepository implements CommentRepositoryInt
             throw new CommentNotFoundException("Comment not found");
         }
 
-        return new Comment(
-            $commentData->id,
-            $commentData->author_id,
+        $comment = new Comment(
+            $this->userRepository->findById($commentData->author_id),
             $commentData->article_id,
             $commentData->text
         );
-    }
-
-    /**
-     * @throws CommentNotFoundException
-     */
-    public function getCommentById(int $id): Comment{
-        $statement = $this->connection->prepare(
-            'SELECT * FROM ' . COMMENT::TABLE_NAME . ' WHERE id = :id'
-        );
-
-        $statement->execute([
-            ':id' => $id
-        ]);
-
-        return $this->getComment($statement);
+        return $comment;
     }
 }

@@ -22,11 +22,13 @@ class CreateUser implements ActionInterface
 
     public function handle(Request $request): Response
     {
+
         try{
             $user = new User(
                 $request->jsonBodyField('firstName'),
                 $request->jsonBodyField('lastName'),
                 $request->jsonBodyField('email'),
+                $request->jsonBodyField('password')
             );
             $this->createUserCommandHandler->handle(new CreateEntityCommand($user));
         }catch (HttpException|UserEmailExistException $e){

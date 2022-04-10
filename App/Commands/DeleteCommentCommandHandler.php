@@ -41,7 +41,7 @@ class DeleteCommentCommandHandler implements CommandHandlerInterface
 
     public function isCommentExists(int $id): bool{
         try{
-            $this->commentRepository->getCommentById($id);
+            $this->commentRepository->findById($id);
         } catch (CommentNotFoundException){
             return false;
         }

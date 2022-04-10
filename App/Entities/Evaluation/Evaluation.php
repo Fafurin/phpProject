@@ -2,28 +2,33 @@
 
 namespace App\Entities\Evaluation;
 
+use App\Entities\User\User;
+use App\Traits\Author;
+use App\Traits\Id;
+
 class Evaluation implements EvaluationInterface
 {
+    use Id;
+    use Author;
+
     public const TABLE_NAME = 'evaluations';
     public const LIKE_TYPE = '1';
     public const DISLIKE_TYPE = '2';
 
-    private ?int $id = null;
+    private int $entityId;
+    private int $evaluationType;
+    private int $entityType;
 
     public function __construct(
-        private int $authorId,
-        private int $entityId,
-        private ?int $evaluationType = null,
-        private ?int $entityType = null
-    ){}
-
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
-
-    public function getAuthorId(): int{
-        return $this->authorId;
+        User $author,
+        int $entityId,
+        int $evaluationType,
+        int $entityType
+    ){
+        $this->author =$author;
+        $this->entityId = $entityId;
+        $this->evaluationType = $evaluationType;
+        $this->entityType = $entityType;
     }
 
     public function getEntityId(): int{
@@ -41,5 +46,4 @@ class Evaluation implements EvaluationInterface
     public function getTableName(): string{
         return static::TABLE_NAME;
     }
-
 }
