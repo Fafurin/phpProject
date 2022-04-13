@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Container\DIContainer;
 use App\Drivers\ConnectionInterface;
 use App\Entities\Comment\Comment;
 use App\Exceptions\CommentNotFoundException;
@@ -13,8 +14,7 @@ class CommentRepository extends EntityRepository implements CommentRepositoryInt
 
     public function __construct(
         ConnectionInterface $connection,
-        private UserRepositoryInterface $userRepository,
-        private LoggerInterface $logger)
+        private ?UserRepositoryInterface $userRepository = null)
     {
         parent::__construct($connection);
     }
@@ -35,10 +35,13 @@ class CommentRepository extends EntityRepository implements CommentRepositoryInt
      * @throws CommentNotFoundException
      */
     public function getComment(\PDOStatement $statement): Comment {
+
+        $logger = DIContainer::getInstance()->get(LoggerInterface::class);
+
         $commentData = $statement->fetch(PDO::FETCH_OBJ);
 
         if(!$commentData){
-            $this->logger->error("Comment not found");
+            $logger->error("Comment not found");
             throw new CommentNotFoundException("Comment not found");
         }
 
@@ -47,6 +50,8 @@ class CommentRepository extends EntityRepository implements CommentRepositoryInt
             $commentData->article_id,
             $commentData->text
         );
+
+        $comment->setId($commentData->id);
         return $comment;
     }
 }

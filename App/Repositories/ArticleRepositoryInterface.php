@@ -2,9 +2,9 @@
 
 namespace App\Repositories;
 
-use App\Entities\Article\Article;
+use App\Entities\Article\ArticleInterface;
 
-interface ArticleRepositoryInterface
+interface ArticleRepositoryInterface extends EntityRepositoryInterface
 {
-    public function getArticleByTitle(string $title): Article;
+    public function findById(int $id): ArticleInterface;
 }

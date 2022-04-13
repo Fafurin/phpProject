@@ -2,6 +2,7 @@
 
 namespace App\Commands;
 
+use App\Container\DIContainer;
 use App\Drivers\ConnectionInterface;
 use App\Entities\User\User;
 use App\Exceptions\UserNotFoundException;
@@ -12,17 +13,17 @@ class DeleteUserCommandHandler implements CommandHandlerInterface
 {
 
     public function __construct(
-        private ?UserRepositoryInterface $userRepository = null,
         private ConnectionInterface $connection,
-        private LoggerInterface $logger)
+        private ?UserRepositoryInterface $userRepository = null)
     {}
 
     /**
      * @throws UserNotFoundException
      */
     public function handle(CommandInterface $command): void{
+        $logger = DIContainer::getInstance()->get(LoggerInterface::class);
 
-        $this->logger->info('Delete user command started');
+        $logger->info('Delete user command started');
 
         /**
          * @var User $user
@@ -35,14 +36,14 @@ class DeleteUserCommandHandler implements CommandHandlerInterface
                 ':id' => (string)$id
             ]);
         }else{
-            $this->logger->warning("The user with this id: $id not found");
+            $logger->warning("The user with this id: $id not found");
             throw new UserNotFoundException();
         }
     }
 
     public function isUserExists(int $id): bool{
         try{
-            $this->userRepository->getUserById($id);
+            $this->userRepository->findById($id);
         } catch (UserNotFoundException){
             return false;
         }
@@ -51,6 +52,6 @@ class DeleteUserCommandHandler implements CommandHandlerInterface
 
     public function getSQL(): string
     {
-        return "DELETE FROM " . User::TABLE_NAME . " WHERE id = :id";
+        return "DELETE FROM users WHERE id = :id";
     }
 }

@@ -12,39 +12,46 @@ use App\Commands\DeleteUserCommandHandler;
 use App\Commands\UpdateArticleCommandHandler;
 use App\Commands\UpdateCommentCommandHandler;
 use App\Commands\UpdateUserCommandHandler;
-use App\Connections\SqLiteConnector;
+use App\Drivers\ConnectionInterface;
 use App\Entities\Article\Article;
 use App\Entities\Comment\Comment;
 use App\Entities\User\User;
 use App\Repositories\ArticleRepository;
+use App\Repositories\CommentRepository;
 use App\Repositories\UserRepository;
 
 class CommandHandlerFactory implements CommandHandlerFactoryInterface
 {
+    public function __construct(
+        private UserRepository $userRepository,
+        private ArticleRepository $articleRepository,
+        private CommentRepository $commentRepository,
+        private ConnectionInterface $connection){}
+
     public function create(string $entityType): CommandHandlerInterface
     {
         return match ($entityType) {
-            User::class => New CreateUserCommandHandler(new UserRepository(new SqLiteConnector())),
-            Article::class => New CreateArticleCommandHandler(new ArticleRepository(new SqLiteConnector())),
-            Comment::class => New CreateCommentCommandHandler()
+            User::class => New CreateUserCommandHandler($this->connection),
+            Article::class => New CreateArticleCommandHandler($this->connection),
+            Comment::class => New CreateCommentCommandHandler($this->connection)
         };
     }
 
     public function delete(string $entityType): CommandHandlerInterface
     {
         return match ($entityType) {
-            User::class => New DeleteUserCommandHandler(),
-            Article::class => New DeleteArticleCommandHandler(),
-            Comment::class => New DeleteCommentCommandHandler()
+            User::class => New DeleteUserCommandHandler($this->connection),
+            Article::class => New DeleteArticleCommandHandler($this->connection),
+            Comment::class => New DeleteCommentCommandHandler($this->connection)
         };
     }
 
     public function update(string $entityType): CommandHandlerInterface
     {
         return match ($entityType) {
-            User::class => New UpdateUserCommandHandler(),
-            Article::class => New UpdateArticleCommandHandler(),
-            Comment::class => New UpdateCommentCommandHandler()
+            User::class => New UpdateUserCommandHandler($this->connection),
+            Article::class => New UpdateArticleCommandHandler($this->connection),
+            Comment::class => New UpdateCommentCommandHandler($this->connection)
         };
     }
 }

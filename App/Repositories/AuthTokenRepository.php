@@ -3,17 +3,41 @@
 namespace App\Repositories;
 
 use App\Entities\Token\AuthToken;
+use App\Entities\User\User;
+use App\Queries\TokenQueryHandlerInterface;
 
 class AuthTokenRepository implements AuthTokenRepositoryInterface
 {
+    private array $tokens = [];
 
-    public function save(AuthToken $authToken): void
+    public function __construct(private TokenQueryHandlerInterface $tokenQueryHandler)
     {
-        // TODO: Implement save() method.
+        $this->tokens = $this->tokenQueryHandler->handle();
     }
 
-    public function get(string $token): AuthToken
+    public function getToken(string $token):?AuthToken
     {
-        // TODO: Implement get() method.
+        return $this->tokens[$token] ?? null;
+    }
+
+    public function getTokenByUser(User $user):?AuthToken
+    {
+        $userToken = null;
+
+        foreach ($this->tokens as $token)
+        {
+            if($user->getId() === $token->getUser()->getId() && !$token->isExpires())
+            {
+                $userToken = $token;
+                break;
+            }
+        }
+
+        return $userToken;
+    }
+
+    public function getTokens():array
+    {
+        return $this->tokens;
     }
 }

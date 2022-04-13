@@ -9,7 +9,7 @@ use App\Exceptions\UserNotFoundException;
 use App\Http\Request;
 use App\Repositories\UserRepositoryInterface;
 
-class PasswordAuthentication implements AuthenticationInterface
+class PasswordAuthentication implements PasswordAuthenticationInterface
 {
 
     public function __construct(private UserRepositoryInterface $userRepository){}

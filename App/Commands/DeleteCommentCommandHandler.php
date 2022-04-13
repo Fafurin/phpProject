@@ -2,6 +2,7 @@
 
 namespace App\Commands;
 
+use App\Container\DIContainer;
 use App\Drivers\ConnectionInterface;
 use App\Entities\Comment\Comment;
 use App\Exceptions\CommentNotFoundException;
@@ -11,9 +12,8 @@ use Psr\Log\LoggerInterface;
 class DeleteCommentCommandHandler implements CommandHandlerInterface
 {
     public function __construct(
-        private ?CommentRepositoryInterface $commentRepository = null,
         private ConnectionInterface $connection,
-        private LoggerInterface $logger)
+        private ?CommentRepositoryInterface $commentRepository = null)
     {}
 
     /**
@@ -21,20 +21,28 @@ class DeleteCommentCommandHandler implements CommandHandlerInterface
      */
     public function handle(CommandInterface $command): void{
 
-        $this->logger->info('Delete comment command started');
+        $logger = DIContainer::getInstance()->get(LoggerInterface::class);
+
+        $logger->info('Delete comment command started');
+
+        /**
+         * @var CreateEntityCommand $command
+         */
+
+        $comment = $command->getEntity();
 
         /**
          * @var Comment $comment
          */
 
-        $id = $command->getId();
+        $id = $comment->getId();
 
         if($this->isCommentExists($id)){
             $this->connection->prepare($this->getSql())->execute([
                 ':id' => (string)$id
             ]);
         } else {
-            $this->logger->warning("The comment with this id: $id not found");
+            $logger->warning("The comment with this id: $id not found");
             throw new CommentNotFoundException;
         }
     }
@@ -50,6 +58,6 @@ class DeleteCommentCommandHandler implements CommandHandlerInterface
 
     public function getSQL(): string
     {
-        return "DELETE FROM " . Comment::TABLE_NAME . " WHERE id = :id";
+        return "DELETE FROM comments WHERE id = :id";
     }
 }

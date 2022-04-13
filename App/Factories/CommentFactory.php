@@ -5,14 +5,15 @@ namespace App\Factories;
 use App\Decorators\CommentDecorator;
 use App\Entities\Comment\Comment;
 use App\Entities\Comment\CommentInterface;
+use App\Entities\User\UserInterface;
 
 class CommentFactory implements CommentFactoryInterface
 {
 
-    public function create(CommentDecorator $commentDecorator): CommentInterface
+    public function create(CommentDecorator $commentDecorator, ?UserInterface $user = null): CommentInterface
     {
         return new Comment(
-            $commentDecorator->authorId,
+            $user,
             $commentDecorator->articleId,
             $commentDecorator->text,
         );
