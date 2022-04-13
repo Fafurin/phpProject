@@ -26,10 +26,16 @@ class DeleteUserCommandHandler implements CommandHandlerInterface
         $logger->info('Delete user command started');
 
         /**
+         * @var CreateEntityCommand $command
+         */
+
+        $user = $command->getEntity();
+
+        /**
          * @var User $user
          */
 
-        $id = $command->getId();
+        $id = $user->getId();
 
         if($this->isUserExists($id)) {
             $this->connection->prepare($this->getSql())->execute([
