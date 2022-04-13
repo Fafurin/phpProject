@@ -3,7 +3,10 @@
 use App\Commands\SymfonyCommands\CreateUser;
 use App\Commands\SymfonyCommands\CreateArticle;
 use App\Commands\SymfonyCommands\CreateComment;
+use App\Commands\SymfonyCommands\DeleteComment;
+use App\Commands\SymfonyCommands\DeleteUser;
 use App\Commands\SymfonyCommands\UpdateArticle;
+use App\Commands\SymfonyCommands\UpdateComment;
 use App\Commands\SymfonyCommands\UpdateUser;
 use App\Commands\SymfonyCommands\DeleteArticle;
 use App\Commands\SymfonyCommands\PopulateDB;
@@ -18,7 +21,11 @@ $commandsClasses =
         CreateArticle::class,
         CreateComment::class,
         UpdateUser::class,
+        UpdateArticle::class,
+        UpdateComment::class,
+        DeleteUser::class,
         DeleteArticle::class,
+        DeleteComment::class,
         PopulateDB::class,
     ];
 
