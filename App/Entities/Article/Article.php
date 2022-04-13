@@ -18,12 +18,10 @@ class Article implements ArticleInterface
     public const TABLE_NAME = 'articles';
     public const ENTITY_TYPE = 1;
 
-    public function __construct(User $author, string $title, string $text)
-    {
-        $this->author = $author;
-        $this->title = $title;
-        $this->text = $text;
-    }
+    public function __construct(
+        private User $author,
+        private string $title,
+        private string $text) {}
 
     public function getTableName(): string{
         return static::TABLE_NAME;

@@ -2,54 +2,48 @@
 
 namespace App\Commands;
 
+use App\Container\DIContainer;
 use App\Drivers\ConnectionInterface;
 use App\Entities\Article\Article;
 use App\Exceptions\ArticleNotFoundException;
-use App\Repositories\ArticleRepositoryInterface;
+use App\Repositories\ArticleRepository;
 use Psr\Log\LoggerInterface;
 
 class DeleteArticleCommandHandler implements CommandHandlerInterface
 {
-
     public function __construct(
-        private ?ArticleRepositoryInterface $articleRepository = null,
         private ConnectionInterface $connection,
-        private LoggerInterface $logger)
-    {}
+        private ?ArticleRepository $articleRepository = null){}
 
     /**
      * @throws ArticleNotFoundException
      */
     public function handle(CommandInterface $command): void{
 
-        $this->logger->info('Delete article command started');
+        $logger = DIContainer::getInstance()->get(LoggerInterface::class);
+
+        $logger->info('Delete article command started');
 
         /**
-         * @var Article $article
+         * @var CreateEntityCommand $command
          */
-        $id = $command->getId();
 
-        if($this->isArticleExists($id)){
+        $article = $command->getEntity();
+
+        $id = $article->getId();
+
+        if($this->articleRepository->getArticleById($id)){
             $this->connection->prepare($this->getSql())->execute([
-                ':id' => (string)$id
+                ':id' => $id
             ]);
         }else{
-            $this->logger->warning("The article with this id: $id not found");
+            $logger->warning("The article with this id: $id not found");
             throw new ArticleNotFoundException();
         }
     }
 
-    public function isArticleExists(int $id): bool{
-        try{
-            $this->articleRepository->getArticleById($id);
-        } catch (ArticleNotFoundException){
-            return false;
-        }
-        return true;
-    }
-
     public function getSQL(): string
     {
-        return "DELETE FROM " . Article::TABLE_NAME . " WHERE id = :id";
+        return "DELETE FROM articles WHERE id = :id";
     }
 }

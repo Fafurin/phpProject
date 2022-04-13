@@ -2,6 +2,7 @@
 
 namespace App\Commands;
 
+use App\Container\DIContainer;
 use App\Drivers\ConnectionInterface;
 use App\Entities\Article\Article;
 use App\Exceptions\ArticleNotFoundException;
@@ -12,40 +13,45 @@ class UpdateArticleCommandHandler implements CommandHandlerInterface
 {
 
     public function __construct(
-        private ?ArticleRepositoryInterface $articleRepository = null,
         private ConnectionInterface $connection,
-        private LoggerInterface $logger)
-    {}
+        private ?ArticleRepositoryInterface $articleRepository = null){}
 
     /**
      * @throws ArticleNotFoundException
      */
     public function handle(CommandInterface $command): void{
 
-        $this->logger->info('Update article command started');
+        $logger = DIContainer::getInstance()->get(LoggerInterface::class);
+
+        $logger->info('Update article command started');
+
+        /**
+         * @var CreateEntityCommand $command
+         */
+
+        $article = $command->getEntity();
 
         /**
          * @var Article $article
          */
-        $article = $command->getEntity();
-        $id = $command->getId();
+        $id = $article->getId();
 
         if($this->isArticleExists($id)){
             $this->connection->prepare($this->getSql())->execute([
                 ':id' => (string)$id,
-                ':authorId' => $article->getAuthorId(),
+                ':authorId' => $article->getAuthor()->getId(),
                 ':title' => $article->getTitle(),
                 ':text' => $article->getText()
             ]);
         }else{
-            $this->logger->warning("The article with this id: $id not found");
+            $logger->warning("The article with this id: $id not found");
             throw new ArticleNotFoundException();
         }
     }
 
     public function isArticleExists(int $id): bool{
         try{
-            $this->articleRepository->getArticleById($id);
+            $this->articleRepository->findById($id);
         } catch (ArticleNotFoundException){
             return false;
         }
@@ -54,7 +60,7 @@ class UpdateArticleCommandHandler implements CommandHandlerInterface
 
     public function getSQL(): string
     {
-        return "UPDATE " . Article::TABLE_NAME . " 
+        return "UPDATE articles 
                 SET author_id = :authorId, title = :title, text = :text 
                 WHERE id = :id";
     }

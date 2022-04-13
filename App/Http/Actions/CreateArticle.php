@@ -9,8 +9,8 @@ use App\Entities\Article\Article;
 use App\Exceptions\ArticleTitleExistException;
 use App\Exceptions\HttpException;
 use App\Exceptions\UserNotFoundException;
-use App\Http\Auth\AuthenticationInterface;
-use App\Http\Auth\IdentificationInterface;
+use App\Http\Auth\PasswordAuthentication;
+use App\Http\Auth\TokenAuthenticationInterface;
 use App\Http\ErrorResponse;
 use App\Http\Request;
 use App\Http\Response;
@@ -21,7 +21,7 @@ class CreateArticle implements ActionInterface
 {
     public function __construct(
         private CreateArticleCommandHandler $createArticleCommandHandler,
-        private AuthenticationInterface $authentication
+        private PasswordAuthentication $authentication
     ){}
 
     public function handle(Request $request): Response

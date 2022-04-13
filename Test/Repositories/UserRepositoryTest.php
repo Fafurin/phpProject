@@ -10,9 +10,7 @@ use App\Repositories\UserRepository;
 use PDOStatement;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
-use Psr\Log\LoggerInterface;
 use Test\Dummy\DummyConnector;
-use Test\Dummy\DummyLogger;
 
 class UserRepositoryTest extends TestCase
 {
@@ -24,17 +22,13 @@ class UserRepositoryTest extends TestCase
 
         $statementStub->method('fetch')->willReturn(false);
 
-        $userRepository = new UserRepository($this->getConnection(), $this->getLogger());
+        $userRepository = new UserRepository($this->getConnection());
 
         $this->expectException(UserNotFoundException::class);
 
         $this->expectExceptionMessage('User not found');
 
         $userRepository->getUser($statementStub);
-    }
-
-    private function getLogger(): LoggerInterface{
-        return $this->getContainer()->get(LoggerInterface::class);
     }
 
     private function getConnection(): ConnectionInterface{
@@ -47,11 +41,6 @@ class UserRepositoryTest extends TestCase
         $container->bind(
             ConnectionInterface::class,
             new DummyConnector(SqLiteConfig::DSN)
-        );
-
-        $container->bind(
-            LoggerInterface::class,
-            new DummyLogger()
         );
         return $container;
     }

@@ -2,6 +2,7 @@
 
 namespace App\Commands;
 
+use App\Container\DIContainer;
 use App\Drivers\ConnectionInterface;
 use App\Entities\User\User;
 use App\Exceptions\UserNotFoundException;
@@ -12,23 +13,28 @@ class UpdateUserCommandHandler implements CommandHandlerInterface
 {
 
     public function __construct(
-        private ?UserRepositoryInterface $userRepository = null,
         private ConnectionInterface $connection,
-        private LoggerInterface $logger)
-    {}
+        private ?UserRepositoryInterface $userRepository = null){}
 
     /**
      * @throws UserNotFoundException
      */
     public function handle(CommandInterface $command): void{
 
-        $this->logger->info('Update article command started');
+        $logger = DIContainer::getInstance()->get(LoggerInterface::class);
+
+        $logger->info('Update article command started');
+
+        /**
+         * @var CreateEntityCommand $command
+         */
+        $user = $command->getEntity();
 
         /**
          * @var User $user
          */
-        $user = $command->getEntity();
-        $id = $command->getId();
+
+        $id = $user->getId();
 
         if($this->isUserExists($id)){
             $this->connection->prepare($this->getSql())->execute([
@@ -38,14 +44,14 @@ class UpdateUserCommandHandler implements CommandHandlerInterface
                 ':email' => $user->getEmail()
             ]);
         }else{
-            $this->logger->warning("The user with this id: $id not found");
+            $logger->warning("The user with this id: $id not found");
             throw new UserNotFoundException();
         }
     }
 
     public function isUserExists(int $id): bool{
         try{
-            $this->userRepository->getUserById($id);
+            $this->userRepository->findById($id);
         } catch (UserNotFoundException){
             return false;
         }
@@ -54,7 +60,7 @@ class UpdateUserCommandHandler implements CommandHandlerInterface
 
     public function getSQL(): string
     {
-        return "UPDATE " . User::TABLE_NAME . " 
+        return "UPDATE users 
                 SET first_name = :firstName, last_name = :lastName, email = :email 
                 WHERE id = :id";
     }

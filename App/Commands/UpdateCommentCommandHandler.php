@@ -2,6 +2,7 @@
 
 namespace App\Commands;
 
+use App\Container\DIContainer;
 use App\Drivers\ConnectionInterface;
 use App\Entities\Comment\Comment;
 use App\Exceptions\CommentNotFoundException;
@@ -12,33 +13,38 @@ class UpdateCommentCommandHandler implements CommandHandlerInterface
 {
 
     public function __construct(
-        private ?CommentRepositoryInterface $commentRepository = null,
         private ConnectionInterface $connection,
-        private LoggerInterface $logger)
-    {}
+        private ?CommentRepositoryInterface $commentRepository = null){}
 
     /**
      * @throws CommentNotFoundException
      */
     public function handle(CommandInterface $command): void{
 
-        $this->logger->info('Update comment command started');
+        $logger = DIContainer::getInstance()->get(LoggerInterface::class);
+
+        $logger->info('Update comment command started');
+
+        /**
+         * @var CreateEntityCommand $command
+         */
+
+        $comment = $command->getEntity();
 
         /**
          * @var Comment $comment
          */
-        $comment = $command->getEntity();
-        $id = $command->getId();
+        $id = $comment->getId();
 
         if($this->isCommentExists($id)){
             $this->connection->prepare($this->getSql())->execute([
                 ':id' => (string)$id,
-                ':authorId' => $comment->getAuthorId(),
+                ':authorId' => $comment->getAuthor()->getId(),
                 ':articleId' => $comment->getArticleId(),
                 ':text' => $comment->getText()
             ]);
         } else {
-            $this->logger->warning("The comment with this id: $id not found");
+            $logger->warning("The comment with this id: $id not found");
             throw new CommentNotFoundException;
         }
     }
@@ -54,7 +60,7 @@ class UpdateCommentCommandHandler implements CommandHandlerInterface
 
     public function getSQL(): string
     {
-        return "UPDATE " . Comment::TABLE_NAME . " 
+        return "UPDATE comments 
                 SET author_id = :authorId, article_id = :articleId, text = :text 
                 WHERE id = :id";
     }

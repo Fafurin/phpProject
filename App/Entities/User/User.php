@@ -30,7 +30,7 @@ class User implements UserInterface
     }
 
     public function hash(string $password, string $email): string{
-        return hash('sha256', $email . $password);
+        return hash('sha256', $email.$password);
     }
 
     public function checkPassword(string $password): bool{
@@ -44,11 +44,32 @@ class User implements UserInterface
 
     public function setPassword(string $password):string
     {
-        $this->password = self::hash($password, $this->email);
+        $this->password = self::hash($password, $this->getEmail());
         return $this->password;
     }
 
     public function getTableName(): string{
         return static::TABLE_NAME;
+    }
+
+    public function setFirstName(string $firstName): self
+    {
+        $this->firstName = $firstName;
+
+        return $this;
+    }
+
+    public function setLastName(string $lastName): self
+    {
+        $this->lastName = $lastName;
+
+        return $this;
+    }
+
+    public function setEmail(string $email): self
+    {
+        $this->email = $email;
+
+        return $this;
     }
 }

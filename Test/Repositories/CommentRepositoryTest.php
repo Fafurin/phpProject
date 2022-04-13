@@ -3,30 +3,30 @@
 namespace Test\Repositories;
 
 use App\config\SqLiteConfig;
-use App\Connections\SqLiteConnector;
 use App\Container\DIContainer;
 use App\Drivers\ConnectionInterface;
 use App\Drivers\PdoConnectionDriver;
 use App\Exceptions\CommentNotFoundException;
 use App\Repositories\CommentRepository;
+use App\Repositories\UserRepository;
 use PDOStatement;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
-use Psr\Log\LoggerInterface;
 use Test\Dummy\DummyConnector;
-use Test\Dummy\DummyLogger;
 
 class CommentRepositoryTest extends TestCase
 {
     public function testItThrowsAnExceptionWhenCommentNotFound()
     {
-        $connectionStub = $this->createStub(SqLiteConnector::class);
+        $connectionStub = $this->createStub(PdoConnectionDriver::class);
         $connectionStub->method('getConnection')
             ->willReturn(new PdoConnectionDriver(SqLiteConfig::DSN));
 
-        $this->assertInstanceOf(SqLiteConnector::class, $connectionStub);
+        $this->assertInstanceOf(PdoConnectionDriver::class, $connectionStub);
 
-        $commentRepository = new CommentRepository($this->getConnection(), $this->getLogger());
+        $userRepository = new UserRepository($this->getConnection());
+
+        $commentRepository = new CommentRepository($this->getConnection(), $userRepository);
 
         $this->expectException(CommentNotFoundException::class);
         $this->expectExceptionMessage("Cannot find comment");
@@ -36,10 +36,6 @@ class CommentRepositoryTest extends TestCase
 
         $this->assertInstanceOf(PDOStatement::class, $statementStub);
         $commentRepository->getComment($statementStub);
-    }
-
-    private function getLogger(): LoggerInterface{
-        return $this->getContainer()->get(LoggerInterface::class);
     }
 
     private function getConnection(): ConnectionInterface{
@@ -53,13 +49,6 @@ class CommentRepositoryTest extends TestCase
             ConnectionInterface::class,
             new DummyConnector(SqLiteConfig::DSN)
         );
-
-        $container->bind(
-            LoggerInterface::class,
-            new DummyLogger()
-        );
         return $container;
     }
-
-
 }
